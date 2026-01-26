@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ruangan;
 
 class ruanganController extends Controller
 {
@@ -11,7 +12,8 @@ class ruanganController extends Controller
      */
     public function index()
     {
-        //
+        $ruangan = Ruangan::all();
+        return view('ruangan.index', compact('ruangan'));
     }
 
     /**
@@ -19,7 +21,7 @@ class ruanganController extends Controller
      */
     public function create()
     {
-        //
+        return view('ruangan.create');
     }
 
     /**
@@ -27,7 +29,23 @@ class ruanganController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'nama_ruangan' => 'required',
+            'lokasi' => 'required',
+        ]  
+        , [
+            'nama_ruangan.required' => 'Ruangan tidak boleh kosong',
+            'lokasi.required' => 'Lokasi tidak boleh kosong',
+        ]
+    
+    );
+
+        $ruangan = new ruangan;
+        $ruangan->nama_ruangan = $request->nama_ruangan;
+        $ruangan->lokasi = $request->lokasi;
+        $ruangan->save();
+
+        return redirect()->route('ruangan.index')->with('success','Data Berhasil Ditambahkan');
     }
 
     /**
@@ -35,7 +53,8 @@ class ruanganController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $ruangan = ruangan::findOrfail($id);
+        return view('ruangan.show', compact('ruangan'));
     }
 
     /**
@@ -43,7 +62,8 @@ class ruanganController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $ruangan = ruangan::findOrfail($id);
+        return view('ruangan.edit', compact('ruangan'));
     }
 
     /**
@@ -51,7 +71,12 @@ class ruanganController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $ruangan = ruangan::findOrfail($id);
+        $ruangan-> nama_ruangan = $request-> nama_ruangan;
+        $ruangan-> lokasi = $request-> lokasi;
+        $ruangan->save();
+
+        return redirect()->route('ruangan.index')->with('success','Data Berhasil Diubah');
     }
 
     /**
@@ -59,6 +84,8 @@ class ruanganController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $ruangan = ruangan::findOrfail($id);
+        $ruangan->delete();
+        return redirect()->route('ruangan.index')->with('success', 'Data Berhasil Dihapus');
     }
 }

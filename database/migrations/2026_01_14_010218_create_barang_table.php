@@ -26,6 +26,8 @@ return new class extends Migration
             ->references('id_ruangan')
             ->on('ruangan')
             ->onDelete('cascade');
+            
+            $table->Integer('stok');
             $table->timestamps();
 
         });
