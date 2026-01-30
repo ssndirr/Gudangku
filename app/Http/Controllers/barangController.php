@@ -2,94 +2,107 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Ruangan;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class BarangController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $barang = Barang::all();
-        return view('barang.index', compact('barang'));
+        $barangs = Barang::with(['kategori', 'ruangan'])
+            ->latest()
+            ->paginate(10);
+            
+        return view('barang.index', compact('barangs'));
     }
 
-    public function create()
+    public function create(): View
     {
-        $kategori = Kategori::all();
-        $ruangan  = Ruangan::all();
-        return view('barang.create', compact('kategori','ruangan'));
+        $kategoris = Kategori::orderBy('nama_kategori')->get();
+        $ruangans = Ruangan::orderBy('nama_ruangan')->get();
+        
+        return view('barang.create', compact('kategoris', 'ruangans'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-    $request->validate([
-        'nama_barang' => 'required',
-        'kategori_id' => 'required',
-        'ruangan_id'  => 'required',
-    ]);
-
-    Barang::create([
-        'nama_barang' => $request->nama_barang,
-        'kategori_id' => $request->kategori_id,
-        'ruangan_id'  => $request->ruangan_id,
-        'stok'        => 0, // otomatis 0
-    ]);
-
-    return redirect()->route('barang.index')
-        ->with('success','Data Berhasil Ditambahkan');
-    }
-
-    public function edit($id)
-    {
-        $barang   = Barang::findOrFail($id);
-        $kategori = Kategori::all();
-        $ruangan  = Ruangan::all();
-
-        return view('barang.edit', compact('barang','kategori','ruangan'));
-    }
-    
-    public function show($id)
-    {
-        $barang = Barang::findOrFail($id);
-        $kategori = Kategori::all();
-        $ruangan = Ruangan::all();
-        return view('barang.show', compact('barang','kategori','ruangan'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'nama_barang' => 'required',
-            'kategori_id' => 'required',
-            'ruangan_id'  => 'required',
-            'stok'        => 'required|integer|min:0', 
+        $validated = $request->validate([
+            'nama_barang' => ['required', 'string', 'max:255'],
+            'kategori_id' => ['required', 'exists:kategoris,id'],
+            'ruangan_id' => ['required', 'exists:ruangans,id'],
+        ], [
+            'nama_barang.required' => 'Nama barang tidak boleh kosong',
+            'kategori_id.required' => 'Kategori harus dipilih',
+            'kategori_id.exists' => 'Kategori tidak valid',
+            'ruangan_id.required' => 'Ruangan harus dipilih',
+            'ruangan_id.exists' => 'Ruangan tidak valid',
         ]);
 
-        $barang = Barang::findOrFail($id);
+        Barang::create([
+            'nama_barang' => $validated['nama_barang'],
+            'kategori_id' => $validated['kategori_id'],
+            'ruangan_id' => $validated['ruangan_id'],
+            'stok' => 0,
+        ]);
 
-        // pastikan stok tidak dikurangi di update
-        if ($request->stok < $barang->stok) {
-            return redirect()->back()->with('error', 'Stok tidak boleh dikurangi secara manual');
+        return redirect()
+            ->route('barang.index')
+            ->with('success', 'Barang berhasil ditambahkan!');
+    }
+
+    public function show(Barang $barang): View
+    {
+        $barang->load(['kategori', 'ruangan', 'barangMasuks', 'barangKeluars']);
+        
+        return view('barang.show', compact('barang'));
+    }
+
+    public function edit(Barang $barang): View
+    {
+        $kategoris = Kategori::orderBy('nama_kategori')->get();
+        $ruangans = Ruangan::orderBy('nama_ruangan')->get();
+        
+        return view('barang.edit', compact('barang', 'kategoris', 'ruangans'));
+    }
+
+    public function update(Request $request, Barang $barang): RedirectResponse
+    {
+        $validated = $request->validate([
+            'nama_barang' => ['required', 'string', 'max:255'],
+            'kategori_id' => ['required', 'exists:kategoris,id'],
+            'ruangan_id' => ['required', 'exists:ruangans,id'],
+        ], [
+            'nama_barang.required' => 'Nama barang tidak boleh kosong',
+            'kategori_id.required' => 'Kategori harus dipilih',
+            'kategori_id.exists' => 'Kategori tidak valid',
+            'ruangan_id.required' => 'Ruangan harus dipilih',
+            'ruangan_id.exists' => 'Ruangan tidak valid',
+        ]);
+
+        $barang->update($validated);
+
+        return redirect()
+            ->route('barang.index')
+            ->with('success', 'Barang berhasil diperbarui!');
+    }
+
+    public function destroy(Barang $barang): RedirectResponse
+    {
+        // Check if has transactions
+        if ($barang->barangMasuks()->exists() || $barang->barangKeluars()->exists()) {
+            return redirect()
+                ->route('barang.index')
+                ->with('error', 'Tidak dapat menghapus barang yang memiliki riwayat transaksi!');
         }
 
-        $barang->update([
-            'nama_barang' => $request->nama_barang,
-            'kategori_id' => $request->kategori_id,
-            'ruangan_id'  => $request->ruangan_id,
-            'stok'        => $request->stok,
-        ]);
+        $barang->delete();
 
-        return redirect()->route('barang.index')
-            ->with('success','Data Berhasil Diubah');
-    }
-
-    public function destroy($id)
-    {
-        Barang::findOrFail($id)->delete();
-
-        return redirect()->route('barang.index')
-            ->with('success','Data Berhasil Dihapus');
+        return redirect()
+            ->route('barang.index')
+            ->with('success', 'Barang berhasil dihapus!');
     }
 }

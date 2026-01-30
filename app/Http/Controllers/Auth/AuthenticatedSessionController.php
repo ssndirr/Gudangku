@@ -31,12 +31,16 @@ class AuthenticatedSessionController extends Controller
     
         if ($user->role === 'admin') {
             return redirect('/dashboard');
-        } elseif ($user->role === 'staff') {
+        }
+    
+        // 3 jenis staff + owner (kalau ada)
+        if (in_array($user->role, ['staff1', 'staff2', 'staff3'])) {
             return redirect('/home');
         }
     
         return redirect('/');
     }
+    
     
 
     /**

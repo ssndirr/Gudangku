@@ -1,83 +1,90 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center">
-            <a href="{{ route('barangkeluar.index') }}"
-               class="mr-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-            </a>
-
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Detail Barang Keluar') }}
-            </h2>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="{{ route('barangkeluar.index') }}" class="mr-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Detail Barang Keluar</h2>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{{ route('barangkeluar.edit', $barangkeluar) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-md transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Edit
+                </a>
+                <form action="{{ route('barangkeluar.destroy', $barangkeluar) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Hapus
+                    </button>
+                </form>
+            </div>
         </div>
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-                <div class="p-6 space-y-4">
-
-                    {{-- Nama Barang --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nama Barang
-                        </label>
-                        <input type="text"
-                               value="{{ $barangkeluar->barang->nama_barang ?? '-' }}"
-                               disabled
-                               class="w-full rounded-md border-gray-300 dark:border-gray-700
-                                      dark:bg-gray-900 dark:text-gray-300">
-                    </div>
-
-                    {{-- Tanggal Keluar --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Tanggal Keluar
-                        </label>
-                        <input type="text"
-                               value="{{ $barangkeluar->tanggal_keluar }}"
-                               disabled
-                               class="w-full rounded-md border-gray-300 dark:border-gray-700
-                                      dark:bg-gray-900 dark:text-gray-300">
-                    </div>
-
-                    {{-- Jumlah Keluar --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Jumlah Keluar
-                        </label>
-                        <input type="number"
-                               value="{{ $barangkeluar->jumlah }}"
-                               disabled
-                               class="w-full rounded-md border-gray-300 dark:border-gray-700
-                                      dark:bg-gray-900 dark:text-gray-300">
-                    </div>
-
-                    {{-- Keterangan (jika ada) --}}
-                    @if(isset($barangkeluar->keterangan))
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Keterangan
-                        </label>
-                        <textarea disabled
-                                  class="w-full rounded-md border-gray-300 dark:border-gray-700
-                                         dark:bg-gray-900 dark:text-gray-300">{{ $barangkeluar->keterangan }}</textarea>
-                    </div>
-                    @endif
-
-                    {{-- Tombol Kembali --}}
-                    <div class="flex justify-end">
-                        <a href="{{ route('barangkeluar.index') }}"
-                           class="px-4 py-2 bg-indigo-600 rounded-md
-                                  text-xs font-semibold text-white
-                                  hover:bg-indigo-700 transition">
-                            Kembali
-                        </a>
-                    </div>
-
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Informasi Transaksi</h3>
+                </div>
+                <div class="p-6">
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nama Barang</dt>
+                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">{{ $barangkeluar->barang->nama_barang }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Kategori</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                    {{ $barangkeluar->barang->kategori->nama_kategori }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Ruangan</dt>
+                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">
+                                <div class="font-medium">{{ $barangkeluar->barang->ruangan->nama_ruangan }}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $barangkeluar->barang->ruangan->lokasi }}</div>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tanggal Keluar</dt>
+                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">{{ $barangkeluar->tanggal_keluar->format('d M Y') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Jumlah Keluar</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-lg font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                    </svg>
+                                    -{{ $barangkeluar->jumlah }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Stok Saat Ini</dt>
+                            <dd class="mt-1 text-lg text-gray-900 dark:text-gray-100">{{ $barangkeluar->barang->stok }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dicatat Pada</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $barangkeluar->created_at->format('d M Y H:i') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Terakhir Diupdate</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $barangkeluar->updated_at->format('d M Y H:i') }}</dd>
+                        </div>
+                    </dl>
                 </div>
             </div>
         </div>

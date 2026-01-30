@@ -2,90 +2,87 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ruangan;
 use Illuminate\Http\Request;
-use App\Models\ruangan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
-class ruanganController extends Controller
+class RuanganController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        $ruangan = Ruangan::all();
-        return view('ruangan.index', compact('ruangan'));
+        $ruangans = Ruangan::withCount('users')
+            ->latest()
+            ->paginate(10);
+            
+        return view('ruangan.index', compact('ruangans'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
         return view('ruangan.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'nama_ruangan' => 'required',
-            'lokasi' => 'required',
-        ]  
-        , [
-            'nama_ruangan.required' => 'Ruangan tidak boleh kosong',
+        $validated = $request->validate([
+            'nama_ruangan' => ['required', 'string', 'max:255', 'unique:ruangans'],
+            'lokasi' => ['required', 'string', 'max:255'],
+        ], [
+            'nama_ruangan.required' => 'Nama ruangan tidak boleh kosong',
+            'nama_ruangan.unique' => 'Nama ruangan sudah digunakan',
             'lokasi.required' => 'Lokasi tidak boleh kosong',
-        ]
-    
-    );
+        ]);
 
-        $ruangan = new ruangan;
-        $ruangan->nama_ruangan = $request->nama_ruangan;
-        $ruangan->lokasi = $request->lokasi;
-        $ruangan->save();
+        Ruangan::create($validated);
 
-        return redirect()->route('ruangan.index')->with('success','Data Berhasil Ditambahkan');
+        return redirect()
+            ->route('ruangan.index')
+            ->with('success', 'Ruangan berhasil ditambahkan!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Ruangan $ruangan): View
     {
-        $ruangan = ruangan::findOrfail($id);
+        $ruangan->loadCount('users');
+        
         return view('ruangan.show', compact('ruangan'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Ruangan $ruangan): View
     {
-        $ruangan = ruangan::findOrfail($id);
         return view('ruangan.edit', compact('ruangan'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Ruangan $ruangan): RedirectResponse
     {
-        $ruangan = ruangan::findOrfail($id);
-        $ruangan-> nama_ruangan = $request-> nama_ruangan;
-        $ruangan-> lokasi = $request-> lokasi;
-        $ruangan->save();
+        $validated = $request->validate([
+            'nama_ruangan' => ['required', 'string', 'max:255', 'unique:ruangans,nama_ruangan,' . $ruangan->id],
+            'lokasi' => ['required', 'string', 'max:255'],
+        ], [
+            'nama_ruangan.required' => 'Nama ruangan tidak boleh kosong',
+            'nama_ruangan.unique' => 'Nama ruangan sudah digunakan',
+            'lokasi.required' => 'Lokasi tidak boleh kosong',
+        ]);
 
-        return redirect()->route('ruangan.index')->with('success','Data Berhasil Diubah');
+        $ruangan->update($validated);
+
+        return redirect()
+            ->route('ruangan.index')
+            ->with('success', 'Ruangan berhasil diperbarui!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Ruangan $ruangan): RedirectResponse
     {
-        $ruangan = ruangan::findOrfail($id);
+        if ($ruangan->users()->exists()) {
+            return redirect()
+                ->route('ruangan.index')
+                ->with('error', 'Tidak dapat menghapus ruangan yang masih memiliki user!');
+        }
+
         $ruangan->delete();
-        return redirect()->route('ruangan.index')->with('success', 'Data Berhasil Dihapus');
+
+        return redirect()
+            ->route('ruangan.index')
+            ->with('success', 'Ruangan berhasil dihapus!');
     }
 }

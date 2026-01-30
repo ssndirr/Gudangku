@@ -3,108 +3,121 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Ruangan;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        $users = User::latest()->paginate(10);
+        $users = User::with('ruangan')
+            ->latest()
+            ->paginate(10);
+            
         return view('users.index', compact('users'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
-        return view('users.create');
+        $ruangans = Ruangan::orderBy('nama_ruangan')->get();
+        
+        return view('users.create', compact('ruangans'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'role' => ['required', 'string', 'in:admin,staff'],
+            'role' => ['required', 'in:admin,staff'],
+            'ruangan_id' => ['nullable', 'exists:ruangans,id'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'name.required' => 'Nama tidak boleh kosong',
+            'email.required' => 'Email tidak boleh kosong',
+            'email.unique' => 'Email sudah digunakan',
+            'role.required' => 'Role tidak boleh kosong',
+            'password.required' => 'Password tidak boleh kosong',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
         ]);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
+            'ruangan_id' => $validated['ruangan_id'],
             'password' => Hash::make($validated['password']),
         ]);
 
-        return redirect()->route('users.index')
+        return redirect()
+            ->route('users.index')
             ->with('success', 'User berhasil ditambahkan!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
+    public function show(User $user): View
     {
+        $user->load('ruangan');
+        
         return view('users.show', compact('user'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
+    public function edit(User $user): View
     {
-        return view('users.edit', compact('user'));
+        $ruangans = Ruangan::orderBy('nama_ruangan')->get();
+        
+        return view('users.edit', compact('user', 'ruangans'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['required', 'string', 'in:admin,staff'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role' => ['required', 'in:admin,staff'],
+            'ruangan_id' => ['nullable', 'exists:ruangans,id'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'name.required' => 'Nama tidak boleh kosong',
+            'email.required' => 'Email tidak boleh kosong',
+            'email.unique' => 'Email sudah digunakan',
+            'role.required' => 'Role tidak boleh kosong',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
         ]);
 
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-        $user->role = $validated['role'];
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'ruangan_id' => $validated['ruangan_id'],
+        ];
 
         if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+            $updateData['password'] = Hash::make($validated['password']);
         }
 
-        $user->save();
+        $user->update($updateData);
 
-        return redirect()->route('users.index')
-            ->with('success', 'User berhasil diupdate!');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User berhasil diperbarui!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
+    public function destroy(User $user): RedirectResponse
     {
-        // Prevent deleting own account
         if ($user->id === auth()->id()) {
-            return redirect()->route('users.index')
+            return redirect()
+                ->route('users.index')
                 ->with('error', 'Tidak dapat menghapus akun sendiri!');
         }
 
         $user->delete();
 
-        return redirect()->route('users.index')
+        return redirect()
+            ->route('users.index')
             ->with('success', 'User berhasil dihapus!');
     }
 }

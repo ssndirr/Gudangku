@@ -2,102 +2,118 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\BarangMasuk;
 use App\Models\Barang;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class BarangMasukController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $barangMasuk = BarangMasuk::all();
-        return view('barangmasuk.index', compact('barangMasuk'));
+        $barangMasuks = BarangMasuk::with('barang.kategori', 'barang.ruangan')
+            ->latest('tanggal_masuk')
+            ->paginate(10);
+            
+        return view('barangmasuk.index', compact('barangMasuks'));
     }
 
-    public function create()
+    public function create(): View
     {
-        $barang = Barang::all();
-        return view('barangmasuk.create', compact('barang'));
+        $barangs = Barang::with(['kategori', 'ruangan'])
+            ->orderBy('nama_barang')
+            ->get();
+        
+        return view('barangmasuk.create', compact('barangs'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'barang_id'     => 'required',
-            'tanggal_masuk' => 'required|date',
-            'jumlah'        => 'required|integer|min:1',
+        $validated = $request->validate([
+            'barang_id' => ['required', 'exists:barangs,id'],
+            'tanggal_masuk' => ['required', 'date'],
+            'jumlah' => ['required', 'integer', 'min:1'],
+        ], [
+            'barang_id.required' => 'Barang harus dipilih',
+            'barang_id.exists' => 'Barang tidak valid',
+            'tanggal_masuk.required' => 'Tanggal masuk tidak boleh kosong',
+            'tanggal_masuk.date' => 'Format tanggal tidak valid',
+            'jumlah.required' => 'Jumlah tidak boleh kosong',
+            'jumlah.min' => 'Jumlah minimal 1',
         ]);
-
-        $barang = Barang::findOrFail($request->barang_id);
 
         // Tambah stok barang
-        $barang->stok += $request->jumlah;
-        $barang->save();
+        $barang = Barang::findOrFail($validated['barang_id']);
+        $barang->tambahStok($validated['jumlah']);
 
-        // Simpan data Barang Masuk
-        BarangMasuk::create([
-            'barang_id'     => $request->barang_id,
-            'tanggal_masuk' => $request->tanggal_masuk,
-            'jumlah'        => $request->jumlah,
-        ]);
+        // Simpan data barang masuk
+        BarangMasuk::create($validated);
 
-        return redirect()->route('barangmasuk.index')
-            ->with('success', 'Data Barang Masuk Berhasil Ditambahkan dan Stok Barang Bertambah');
+        return redirect()
+            ->route('barangmasuk.index')
+            ->with('success', 'Barang masuk berhasil ditambahkan! Stok bertambah ' . $validated['jumlah']);
     }
 
-    public function show($id)
+    public function show(BarangMasuk $barangmasuk): View
     {
-        $barangmasuk = BarangMasuk::with('barang')->findOrFail($id);
+        $barangmasuk->load(['barang.kategori', 'barang.ruangan']);
+        
         return view('barangmasuk.show', compact('barangmasuk'));
     }
 
-    public function edit($id)
+    public function edit(BarangMasuk $barangmasuk): View
     {
-        $barangMasuk = BarangMasuk::findOrFail($id);
-        $barang = Barang::all();
-
-        return view('barangmasuk.edit', compact('barangMasuk', 'barang'));
+        $barangs = Barang::with(['kategori', 'ruangan'])
+            ->orderBy('nama_barang')
+            ->get();
+        
+        return view('barangmasuk.edit', compact('barangmasuk', 'barangs'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, BarangMasuk $barangmasuk): RedirectResponse
     {
-        $request->validate([
-            'barang_id'     => 'required',
-            'tanggal_masuk' => 'required|date',
-            'jumlah'        => 'required|integer|min:1',
+        $validated = $request->validate([
+            'barang_id' => ['required', 'exists:barangs,id'],
+            'tanggal_masuk' => ['required', 'date'],
+            'jumlah' => ['required', 'integer', 'min:1'],
+        ], [
+            'barang_id.required' => 'Barang harus dipilih',
+            'barang_id.exists' => 'Barang tidak valid',
+            'tanggal_masuk.required' => 'Tanggal masuk tidak boleh kosong',
+            'tanggal_masuk.date' => 'Format tanggal tidak valid',
+            'jumlah.required' => 'Jumlah tidak boleh kosong',
+            'jumlah.min' => 'Jumlah minimal 1',
         ]);
 
-        $barangMasuk = BarangMasuk::findOrFail($id);
+        // Get old barang
+        $oldBarang = Barang::findOrFail($barangmasuk->barang_id);
+        
+        // Kembalikan stok lama
+        $oldBarang->kurangiStok($barangmasuk->jumlah);
 
-        // Ambil barang terkait
-        $barang = Barang::findOrFail($request->barang_id);
+        // Tambah stok baru
+        $newBarang = Barang::findOrFail($validated['barang_id']);
+        $newBarang->tambahStok($validated['jumlah']);
 
-        // Update stok: kurangi stok lama, tambah stok baru
-        $barang->stok = $barang->stok - $barangMasuk->jumlah + $request->jumlah;
-        $barang->save();
+        // Update barang masuk
+        $barangmasuk->update($validated);
 
-        $barangMasuk->update([
-            'barang_id'     => $request->barang_id,
-            'tanggal_masuk' => $request->tanggal_masuk,
-            'jumlah'        => $request->jumlah,
-        ]);
-
-        return redirect()->route('barangmasuk.index')
-            ->with('success', 'Data Barang Masuk Berhasil Diubah dan Stok Barang Terupdate');
+        return redirect()
+            ->route('barangmasuk.index')
+            ->with('success', 'Barang masuk berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(BarangMasuk $barangmasuk): RedirectResponse
     {
-        $barangMasuk = BarangMasuk::findOrFail($id);
+        // Kurangi stok
+        $barang = Barang::findOrFail($barangmasuk->barang_id);
+        $barang->kurangiStok($barangmasuk->jumlah);
 
-        // Kurangi stok saat data dihapus
-        $barang = Barang::findOrFail($barangMasuk->barang_id);
-        $barang->stok -= $barangMasuk->jumlah;
-        $barang->save();
+        $barangmasuk->delete();
 
-        $barangMasuk->delete();
-
-        return redirect()->route('barangmasuk.index')
-            ->with('success', 'Data Barang Masuk Berhasil Dihapus dan Stok Barang Dikurangi');
+        return redirect()
+            ->route('barangmasuk.index')
+            ->with('success', 'Barang masuk berhasil dihapus! Stok dikurangi ' . $barangmasuk->jumlah);
     }
 }

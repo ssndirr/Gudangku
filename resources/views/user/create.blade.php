@@ -1,37 +1,149 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <h4>Tambah User</h4>
-
-    <form method="POST" action="{{ route('user.store') }}">
-        @csrf
-
-        <div class="mb-2">
-            <label>Nama</label>
-            <input class="form-control" name="name">
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center">
+            <a href="{{ route('users.index') }}" class="mr-4 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </a>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                Edit User
+            </h2>
         </div>
+    </x-slot>
 
-        <div class="mb-2">
-            <label>Email</label>
-            <input class="form-control" name="email">
+    <div class="py-6">
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <form method="POST" action="{{ route('users.update', $user) }}">
+                        @csrf
+                        @method('PUT')
+
+                        {{-- Nama --}}
+                        <div class="mb-4">
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nama Lengkap <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   value="{{ old('name', $user->name) }}" 
+                                   required
+                                   class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('name') border-red-500 @enderror">
+                            @error('name')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Email --}}
+                        <div class="mb-4">
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Email <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" 
+                                   id="email" 
+                                   name="email" 
+                                   value="{{ old('email', $user->email) }}" 
+                                   required
+                                   class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('email') border-red-500 @enderror">
+                            @error('email')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Role --}}
+                        <div class="mb-4">
+                            <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Role <span class="text-red-500">*</span>
+                            </label>
+                            <select id="role" 
+                                    name="role" 
+                                    required
+                                    onchange="toggleRuangan()"
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('role') border-red-500 @enderror">
+                                <option value="">-- Pilih Role --</option>
+                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="staff" {{ old('role', $user->role) == 'staff' ? 'selected' : '' }}>Staff</option>
+                            </select>
+                            @error('role')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Ruangan --}}
+                        <div id="ruangan-field" class="mb-4" style="display: {{ old('role', $user->role) == 'staff' ? 'block' : 'none' }};">
+                            <label for="ruangan_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Ruangan <span class="text-red-500">*</span>
+                            </label>
+                            <select id="ruangan_id" 
+                                    name="ruangan_id"
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('ruangan_id') border-red-500 @enderror">
+                                <option value="">-- Pilih Ruangan --</option>
+                                @foreach($ruangans as $ruangan)
+                                    <option value="{{ $ruangan->id }}" {{ old('ruangan_id', $user->ruangan_id) == $ruangan->id ? 'selected' : '' }}>
+                                        {{ $ruangan->nama_ruangan }} - {{ $ruangan->lokasi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('ruangan_id')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Password --}}
+                        <div class="mb-4">
+                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Password Baru
+                            </label>
+                            <input type="password" 
+                                   id="password" 
+                                   name="password"
+                                   class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('password') border-red-500 @enderror">
+                            @error('password')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kosongkan jika tidak ingin mengubah password</p>
+                        </div>
+
+                        {{-- Konfirmasi Password --}}
+                        <div class="mb-6">
+                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Konfirmasi Password Baru
+                            </label>
+                            <input type="password" 
+                                   id="password_confirmation" 
+                                   name="password_confirmation"
+                                   class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+
+                        {{-- Buttons --}}
+                        <div class="flex justify-end space-x-3">
+                            <a href="{{ route('users.index') }}"
+                                class="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-400 dark:hover:bg-gray-600 rounded-md transition">
+                                Batal
+                            </a>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition">
+                                Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="mb-2">
-            <label>Password</label>
-            <input type="password" class="form-control" name="password">
-        </div>
-
-        <div class="mb-3">
-            <label>Role</label>
-            <select class="form-control" name="role">
-                <option value="admin">Admin</option>
-                <option value="pegawai">Pegawai</option>
-            </select>
-        </div>
-
-        <button class="btn btn-primary">Simpan</button>
-        <a href="{{ route('user.index') }}" class="btn btn-secondary">Kembali</a>
-    </form>
-</div>
-@endsection
+    <script>
+        function toggleRuangan() {
+            var role = document.getElementById('role').value;
+            var ruanganField = document.getElementById('ruangan-field');
+            
+            if (role === 'staff') {
+                ruanganField.style.display = 'block';
+            } else {
+                ruanganField.style.display = 'none';
+            }
+        }
+    </script>
+</x-app-layout>

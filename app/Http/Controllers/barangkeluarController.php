@@ -2,111 +2,140 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\BarangKeluar;
 use App\Models\Barang;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class BarangKeluarController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $barangKeluar = BarangKeluar::with('barang')->get();
-        return view('barangkeluar.index', compact('barangKeluar'));
+        $barangKeluars = BarangKeluar::with('barang.kategori', 'barang.ruangan')
+            ->latest('tanggal_keluar')
+            ->paginate(10);
+            
+        return view('barangkeluar.index', compact('barangKeluars'));
     }
 
-    public function create()
+    public function create(): View
     {
-        $barang = Barang::all();
-        return view('barangkeluar.create', compact('barang'));
+        $barangs = Barang::with(['kategori', 'ruangan'])
+            ->where('stok', '>', 0)
+            ->orderBy('nama_barang')
+            ->get();
+        
+        return view('barangkeluar.create', compact('barangs'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'barang_id'      => 'required',
-            'tanggal_keluar' => 'required|date',
-            'jumlah'         => 'required|integer|min:1',
+        $validated = $request->validate([
+            'barang_id' => ['required', 'exists:barangs,id'],
+            'tanggal_keluar' => ['required', 'date'],
+            'jumlah' => ['required', 'integer', 'min:1'],
+        ], [
+            'barang_id.required' => 'Barang harus dipilih',
+            'barang_id.exists' => 'Barang tidak valid',
+            'tanggal_keluar.required' => 'Tanggal keluar tidak boleh kosong',
+            'tanggal_keluar.date' => 'Format tanggal tidak valid',
+            'jumlah.required' => 'Jumlah tidak boleh kosong',
+            'jumlah.min' => 'Jumlah minimal 1',
         ]);
 
-        $barang = Barang::findOrFail($request->barang_id);
+        $barang = Barang::findOrFail($validated['barang_id']);
 
         // Cek stok cukup
-        if ($request->jumlah > $barang->stok) {
-            return redirect()->back()->with('error', 'Jumlah keluar melebihi stok yang tersedia');
+        if (!$barang->isStokTersedia($validated['jumlah'])) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Stok tidak mencukupi! Stok tersedia: ' . $barang->stok);
         }
 
         // Kurangi stok
-        $barang->stok -= $request->jumlah;
-        $barang->save();
+        $barang->kurangiStok($validated['jumlah']);
 
-        // Simpan data Barang Keluar
-        BarangKeluar::create([
-            'barang_id'      => $request->barang_id,
-            'tanggal_keluar' => $request->tanggal_keluar,
-            'jumlah'         => $request->jumlah,
+        // Simpan data barang keluar
+        BarangKeluar::create($validated);
+
+        return redirect()
+            ->route('barangkeluar.index')
+            ->with('success', 'Barang keluar berhasil ditambahkan! Stok berkurang ' . $validated['jumlah']);
+    }
+
+    public function show(BarangKeluar $barangkeluar): View
+    {
+        $barangkeluar->load(['barang.kategori', 'barang.ruangan']);
+        
+        return view('barangkeluar.show', compact('barangkeluar'));
+    }
+
+    public function edit(BarangKeluar $barangkeluar): View
+    {
+        $barangs = Barang::with(['kategori', 'ruangan'])
+            ->orderBy('nama_barang')
+            ->get();
+        
+        return view('barangkeluar.edit', compact('barangkeluar', 'barangs'));
+    }
+
+    public function update(Request $request, BarangKeluar $barangkeluar): RedirectResponse
+    {
+        $validated = $request->validate([
+            'barang_id' => ['required', 'exists:barangs,id'],
+            'tanggal_keluar' => ['required', 'date'],
+            'jumlah' => ['required', 'integer', 'min:1'],
+        ], [
+            'barang_id.required' => 'Barang harus dipilih',
+            'barang_id.exists' => 'Barang tidak valid',
+            'tanggal_keluar.required' => 'Tanggal keluar tidak boleh kosong',
+            'tanggal_keluar.date' => 'Format tanggal tidak valid',
+            'jumlah.required' => 'Jumlah tidak boleh kosong',
+            'jumlah.min' => 'Jumlah minimal 1',
         ]);
 
-        return redirect()->route('barangkeluar.index')
-            ->with('success', 'Data Barang Keluar Berhasil Ditambahkan dan Stok Berkurang');
-    }
+        // Get old barang
+        $oldBarang = Barang::findOrFail($barangkeluar->barang_id);
+        
+        // Kembalikan stok lama
+        $oldBarang->tambahStok($barangkeluar->jumlah);
 
-    public function show($id)
-    {
-        $barangKeluar = BarangKeluar::with('barang')->findOrFail($id);
-        return view('barangkeluar.show', compact('barangKeluar'));
-    }
-
-    public function edit($id)
-    {
-        $barangKeluar = BarangKeluar::findOrFail($id);
-        $barang = Barang::all();
-
-        return view('barangkeluar.edit', compact('barangKeluar', 'barang'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'barang_id'      => 'required',
-            'tanggal_keluar' => 'required|date',
-            'jumlah'         => 'required|integer|min:1',
-        ]);
-
-        $barangKeluar = BarangKeluar::findOrFail($id);
-        $barang = Barang::findOrFail($request->barang_id);
-
-        // Update stok: kembalikan stok lama, kurangi stok baru
-        $barang->stok = $barang->stok + $barangKeluar->jumlah - $request->jumlah;
-
-        // Pastikan stok tidak negatif
-        if ($barang->stok < 0) {
-            return redirect()->back()->with('error', 'Jumlah keluar melebihi stok yang tersedia');
+        // Kurangi stok baru
+        $newBarang = Barang::findOrFail($validated['barang_id']);
+        
+        // Cek stok cukup
+        if (!$newBarang->isStokTersedia($validated['jumlah'])) {
+            // Kembalikan lagi stok yang sudah ditambah
+            $oldBarang->kurangiStok($barangkeluar->jumlah);
+            
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Stok tidak mencukupi! Stok tersedia: ' . $newBarang->stok);
         }
 
-        $barang->save();
+        $newBarang->kurangiStok($validated['jumlah']);
 
-        $barangKeluar->update([
-            'barang_id'      => $request->barang_id,
-            'tanggal_keluar' => $request->tanggal_keluar,
-            'jumlah'         => $request->jumlah,
-        ]);
+        // Update barang keluar
+        $barangkeluar->update($validated);
 
-        return redirect()->route('barangkeluar.index')
-            ->with('success', 'Data Barang Keluar Berhasil Diubah dan Stok Terupdate');
+        return redirect()
+            ->route('barangkeluar.index')
+            ->with('success', 'Barang keluar berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(BarangKeluar $barangkeluar): RedirectResponse
     {
-        $barangKeluar = BarangKeluar::findOrFail($id);
-        $barang = Barang::findOrFail($barangKeluar->barang_id);
+        // Kembalikan stok
+        $barang = Barang::findOrFail($barangkeluar->barang_id);
+        $barang->tambahStok($barangkeluar->jumlah);
 
-        // Kembalikan stok saat data dihapus
-        $barang->stok += $barangKeluar->jumlah;
-        $barang->save();
+        $barangkeluar->delete();
 
-        $barangKeluar->delete();
-
-        return redirect()->route('barangkeluar.index')
-            ->with('success', 'Data Barang Keluar Berhasil Dihapus dan Stok Dikembalikan');
+        return redirect()
+            ->route('barangkeluar.index')
+            ->with('success', 'Barang keluar berhasil dihapus! Stok dikembalikan ' . $barangkeluar->jumlah);
     }
 }

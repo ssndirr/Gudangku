@@ -3,12 +3,12 @@
         <!-- Logo & Brand -->
         <div class="flex items-center justify-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center space-x-3">
-                <div class="flex items-center justify-center w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
-                    <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                </div>
-                <div>
+                <div class="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden">
+                <img src="{{ asset('images/logogk.png') }}"
+                    alt="Logo GudangKu"
+                    class="w-full h-full object-contain">
+            </div>
+            <div>
                     <h1 class="text-xl font-bold text-gray-900 dark:text-white">GudangKu</h1>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Inventaris</p>
                 </div>
@@ -37,7 +37,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                     </svg>
-                    <span class="ml-3">User</span>
+                    <span class="ml-3">Pengguna</span>
                 </a>
             </li>
 

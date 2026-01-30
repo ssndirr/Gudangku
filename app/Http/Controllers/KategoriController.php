@@ -2,86 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kategori;
 use Illuminate\Http\Request;
-use App\Models\kategori;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class KategoriController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        $kategori = Kategori::all();
-        return view('kategori.index', compact('kategori'));
+        $kategoris = Kategori::withCount('barangs')
+            ->latest()
+            ->paginate(10);
+            
+        return view('kategori.index', compact('kategoris'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
         return view('kategori.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'nama_kategori' => 'required',
-        ]  
-        , [
-            'nama_kategori.required' => 'Kategori tidak boleh kosong',
-        ]
-    
-    );
+        $validated = $request->validate([
+            'nama_kategori' => ['required', 'string', 'max:255', 'unique:kategoris'],
+        ], [
+            'nama_kategori.required' => 'Nama kategori tidak boleh kosong',
+            'nama_kategori.unique' => 'Nama kategori sudah digunakan',
+        ]);
 
-        $kategori = new kategori;
-        $kategori->nama_kategori = $request->nama_kategori;
-        $kategori->save();
+        Kategori::create($validated);
 
-        return redirect()->route('kategori.index')->with('success','Data Berhasil Ditambahkan');
+        return redirect()
+            ->route('kategori.index')
+            ->with('success', 'Kategori berhasil ditambahkan!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Kategori $kategori): View
     {
-        $kategori = kategori::findOrfail($id);
+        $kategori->loadCount('barangs');
+        
         return view('kategori.show', compact('kategori'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Kategori $kategori): View
     {
-        $kategori = kategori::findOrfail($id);
         return view('kategori.edit', compact('kategori'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Kategori $kategori): RedirectResponse
     {
-        $kategori = kategori::findOrfail($id);
-        $kategori-> nama_kategori = $request-> nama_kategori;
-        $kategori->save();
+        $validated = $request->validate([
+            'nama_kategori' => ['required', 'string', 'max:255', 'unique:kategoris,nama_kategori,' . $kategori->id],
+        ], [
+            'nama_kategori.required' => 'Nama kategori tidak boleh kosong',
+            'nama_kategori.unique' => 'Nama kategori sudah digunakan',
+        ]);
 
-        return redirect()->route('kategori.index')->with('success','Data Berhasil Diubah');
+        $kategori->update($validated);
+
+        return redirect()
+            ->route('kategori.index')
+            ->with('success', 'Kategori berhasil diperbarui!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Kategori $kategori): RedirectResponse
     {
-        $kategori = kategori::findOrfail($id);
+        if ($kategori->barangs()->exists()) {
+            return redirect()
+                ->route('kategori.index')
+                ->with('error', 'Tidak dapat menghapus kategori yang masih memiliki barang!');
+        }
+
         $kategori->delete();
-        return redirect()->route('kategori.index')->with('success', 'Data Berhasil Dihapus');
+
+        return redirect()
+            ->route('kategori.index')
+            ->with('success', 'Kategori berhasil dihapus!');
     }
 }

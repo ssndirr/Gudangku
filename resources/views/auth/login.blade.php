@@ -2,56 +2,67 @@
      FILE: resources/views/auth/login.blade.php
      ======================================== -->
      <x-guest-layout>
-    <!-- Logo & Title -->
-    <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-3">
-            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
+    <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8">
+        
+        <!-- Logo & Title -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
+                <img src="{{ asset('images/logogk.png') }}"
+                    alt="Logo GudangKu"
+                    class="w-14 h-14 object-contain">
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">GudangKu</h2>
+            <p class="text-gray-600">Sistem Inventaris Mebel</p>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">GudangKu</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Sistem Inventaris Barang</p>
+
+        <!-- Session Status -->
+        <x-auth-session-status class="mb-4" :status="session('status')" />
+
+        <!-- Login Form -->
+        <form method="POST" action="{{ route('login') }}" class="space-y-5">
+            @csrf
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input 
+                    id="email" 
+                    type="email" 
+                    name="email" 
+                    value="{{ old('email') }}"
+                    required 
+                    autofocus 
+                    autocomplete="username"
+                    placeholder="nama@email.com"
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all">
+                <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <input 
+                    id="password" 
+                    type="password"
+                    name="password"
+                    required 
+                    autocomplete="current-password"
+                    placeholder="Masukkan password"
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all">
+                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            </div>
+
+            <!-- Login Button -->
+            <button 
+                type="submit"
+                class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200">
+                Masuk
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <p class="text-center text-sm text-gray-500 mt-6">
+            © 2024 GudangKu
+        </p>
     </div>
-
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form method="POST" action="{{ route('login') }}" class="space-y-4">
-        @csrf
-
-        <!-- Email -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input 
-                id="email" 
-                class="block mt-1 w-full" 
-                type="email" 
-                name="email" 
-                :value="old('email')" 
-                required 
-                autofocus 
-                autocomplete="username"
-                placeholder="nama@email.com" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <!-- Password -->
-        <div>
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input 
-                id="password" 
-                class="block mt-1 w-full"
-                type="password"
-                name="password"
-                required 
-                autocomplete="current-password"
-                placeholder="Masukkan password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Login Button -->
-        <x-primary-button class="w-full justify-center">
-            {{ __('Masuk') }}
-        </x-primary-button>
-    </form>
 </x-guest-layout>

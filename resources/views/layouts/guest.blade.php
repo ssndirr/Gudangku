@@ -13,16 +13,37 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Custom Styles -->
+        <style>
+            /* Warehouse Background */
+            .warehouse-bg {
+                background: linear-gradient(135deg, #92400e 0%, #78350f 50%, #92400e 100%);
+                position: relative;
+            }
+            .warehouse-bg::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 35px,
+                    rgba(255,255,255,.03) 35px,
+                    rgba(255,255,255,.03) 70px
+                );
+                pointer-events: none;
+            }
+        </style>
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
-            <!-- <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div> -->
+    <body class="font-sans antialiased">
+        <div class="warehouse-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+            
+            <!-- Decorative Gradient Overlay -->
+            <div class="absolute inset-0 z-0 bg-gradient-to-br from-amber-900/40 via-transparent to-orange-900/40 pointer-events-none"></div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
+            <!-- Content Container -->
+            <div class="relative z-10 w-full max-w-md">
                 {{ $slot }}
             </div>
         </div>

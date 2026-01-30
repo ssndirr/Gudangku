@@ -12,35 +12,35 @@ use App\Http\Controllers\BarangKeluarController;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Support\Facades\Route;
 
-
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-
 Route::middleware(['auth', RoleMiddleware::class.':admin'])->group(function () {
-       // Profile
-       Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-       Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-       Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Resource routes admin
-    Route::resource('users', UserController::class)->names('users');
-    Route::resource('kategoris', KategoriController::class)->names('kategori');
-    Route::resource('ruangan', RuanganController::class)->names('ruangan');
-    Route::resource('barang', BarangController::class)->names('barang');
-    Route::resource('barangmasuk', BarangMasukController::class)->names('barangmasuk');
-    Route::resource('barangkeluar', BarangKeluarController::class)->names('barangkeluar');
+    Route::resource('users', UserController::class);
+    Route::resource('kategori', KategoriController::class); 
+    Route::resource('ruangan', RuanganController::class);
+    Route::resource('barang', BarangController::class);
+    Route::resource('barangmasuk', BarangMasukController::class);
+    Route::resource('barangkeluar', BarangKeluarController::class);
 });
 
-
 Route::middleware(['auth'])->group(function () {
-     // Home index → nama route: home
-     Route::get('/home', [HomeController::class, 'index'])->name('home');
-
-     // Home show/detail → nama route: home.show
-     Route::get('/home/barang/{id}', [HomeController::class, 'show'])->name('home.show');
+    // Home routes for all authenticated users
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/home/barang/{barang}', [HomeController::class, 'show'])->name('home.show');
+    
+    // Order routes for staff only
+    Route::get('/home/order', [HomeController::class, 'order'])->name('home.order');
+    Route::post('/home/order/masuk', [HomeController::class, 'storeBarangMasuk'])->name('home.order.masuk');
+    Route::post('/home/order/keluar', [HomeController::class, 'storeBarangKeluar'])->name('home.order.keluar');
 });
 
 require __DIR__.'/auth.php';
