@@ -12,22 +12,33 @@
     <link href="{{ asset('css/warehouse-theme.css') }}" rel="stylesheet">
     <style>
         .nav-pills .nav-link {
-            border-radius: 10px;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s;
+    background-color: #e2e8f0;
+    color: #1e40af !important;
+    border: 2px solid #bfdbfe;
+}
+
         .nav-pills .nav-link:hover {
-            background-color: rgba(13, 110, 253, 0.1);
+            background-color: #bfdbfe;
+            color: #1d4ed8;
             transform: translateY(-2px);
+            border-color: #93c5fd;
         }
+
         .nav-pills .nav-link.active {
             background-color: #0d6efd;
+            color: #ffffff !important;
             box-shadow: 0 4px 6px rgba(13, 110, 253, 0.3);
+            border-color: #0d6efd;
         }
+
         .ruangan-badge {
             font-size: 0.85rem;
             padding: 0.5rem 1rem;
         }
+        
     </style>
 </head>
 <body>
