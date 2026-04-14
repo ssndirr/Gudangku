@@ -88,23 +88,23 @@
                             </dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email Terverifikasi</dt>
+                            <!-- <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email Terverifikasi</dt> -->
                             <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                 @if($user->email_verified_at)
                                     <span class="inline-flex items-center text-green-600 dark:text-green-400">
                                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        {{ $user->email_verified_at->format('d M Y H:i') }}
+                                        {{ $user->email_verified_at->format('d M Y') }}
                                     </span>
                                 @else
-                                    <span class="text-red-600 dark:text-red-400">Belum diverifikasi</span>
+                                    <!-- <span class="text-red-600 dark:text-red-400">Belum diverifikasi</span> -->
                                 @endif
                             </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dibuat Pada</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->created_at->format('d M Y H:i') }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->created_at->format('d M Y ') }}</dd>
                         </div>
                     </dl>
                 </div>

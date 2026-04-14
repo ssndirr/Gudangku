@@ -48,11 +48,11 @@
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dibuat Pada</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $kategori->created_at->format('d M Y H:i') }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $kategori->created_at->format('d M Y ') }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Terakhir Diupdate</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $kategori->updated_at->format('d M Y H:i') }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $kategori->updated_at->format('d M Y ') }}</dd>
                         </div>
                     </dl>
                 </div>
